@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>マッチョ育成ゲーム</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 700px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .timer-container {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: white;
+            font-weight: bold;
+            font-size: 1.3em;
+        }
+        
+        #timer {
+            font-size: 2em;
+            display: inline-block;
+            min-width: 60px;
+        }
+        
+        #timerBar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        #timerFill {
+            height: 100%;
+            background: white;
+            width: 100%;
+            transition: width 0.1s linear;
+        }
+        
+        #characterContainer {
+            width: 100%;
+            height: 320px;
+            margin: 30px auto;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #character {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.5s ease;
+            filter: drop-shadow(0 5px 20px rgba(0,0,0,0.2));
+        }
+        
+        #character.grow {
+            animation: muscleGrow 0.5s ease-in-out;
+        }
+        
+        #character.shrink {
+            animation: muscleShrink 0.5s ease-in-out;
+        }
+        
+        #character.train {
+            animation: training 0.6s ease-in-out;
+        }
+        
+        @keyframes muscleGrow {
+            0% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.15) rotate(-2deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        
+        @keyframes muscleShrink {
+            0% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(0.85) rotate(2deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        
+        @keyframes training {
+            0% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.1) rotate(5deg); }
+            50% { transform: scale(1.2) rotate(-5deg); }
+            75% { transform: scale(1.1) rotate(5deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        
+        .character-body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+        
+        .character-face {
+            font-size: 60px;
+            margin-bottom: 5px;
+        }
+        
+        .character-torso {
+            font-size: 80px;
+            line-height: 1;
+            margin: 0 -10px;
+        }
+        
+        .character-legs {
+            font-size: 50px;
+            margin-top: 5px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin: 25px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 10px;
+        }
+        
+        .stat-box {
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .stat-box.health {
+            border-left-color: #e74c3c;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-box.health .stat-value {
+            color: #e74c3c;
+        }
+        
+        #progressBar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        #progress {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .train-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1em;
+            transition: all 0.3s;
+        }
+        
+        .train-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+        }
+        
+        .train-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        .train-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .food-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 8px;
+            margin: 20px 0;
+        }
+        
+        .food-btn {
+            padding: 12px 15px;
+            font-size: 0.85em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            color: white;
+            text-transform: uppercase;
+            min-height: 90px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .food-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .food-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        .food-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-good {
+            background: #52c77c;
+        }
+        
+        .btn-bad {
+            background: #e74c3c;
+        }
+        
+        .btn-neutral {
+            background: #95a5a6;
+        }
+        
+        .food-emoji {
+            font-size: 1.8em;
+            margin-bottom: 3px;
+        }
+        
+        .food-name {
+            font-size: 0.8em;
+            line-height: 1.2;
+        }
+        
+        .message {
+            min-height: 40px;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .message.bad {
+            color: #e74c3c;
+        }
+        
+        .message.good {
+            color: #52c77c;
+        }
+        
+        .message.train {
+            color: #f5576c;
+            font-size: 1.3em;
+        }
+        
+        .clear-message {
+            color: #52c77c;
+            font-size: 1.5em;
+            animation: pulse 1s infinite;
+        }
+        
+        .game-over-message {
+            color: #e74c3c;
+            font-size: 1.5em;
+            animation: shake 0.5s;
+        }
+        
+        .timeout-message {
+            color: #ff9a56;
+            font-size: 1.3em;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .reset-btn {
+            background: #95a5a6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+        
+        .reset-btn:hover {
+            background: #7f8c8d;
+            transform: translateY(-2px);
+        }
+        
+        .round-info {
+            font-size: 0.9em;
+            color: #999;
+            margin-top: 10px;
+        }
+
+        .train-info {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💪 マッチョ育成ゲーム</h1>
+        <p class="subtitle">時間内に食べ物を選んでマッチョを育成しよう！</p>
+        
+        <div class="timer-container">
+            ⏱️ 残り時間: <span id="timer">10</span>秒
+            <div id="timerBar">
+                <div id="timerFill"></div>
+            </div>
+        </div>
+        
+        <div id="characterContainer">
+            <div id="character">
+                <div class="character-body">
+                    <div class="character-face" id="face">😊</div>
+                    <div class="character-torso" id="torso">🧍</div>
+                    <div class="character-legs" id="legs">🦵🦵</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-label">マッチョ度</div>
+                <div class="stat-value" id="muscleValue">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">レベル</div>
+                <div class="stat-value" id="levelValue">1</div>
+            </div>
+            <div class="stat-box health">
+                <div class="stat-label">体力</div>
+                <div class="stat-value" id="healthValue">100</div>
+            </div>
+        </div>
+        
+        <div id="progressBar">
+            <div id="progress"></div>
+        </div>
+        
+        <div class="button-group">
+            <button class="train-btn" id="trainBtn" onclick="train()">
+                💪 猛特訓<br>
+                <span class="train-info" id="trainInfo">体力-20 / +10</span>
+            </button>
+            <div style="text-align: center; padding: 15px; background: #f0f0f0; border-radius: 8px; color: #666; font-size: 0.9em;">
+                選択肢が変わるまで待機中...
+            </div>
+        </div>
+        
+        <div class="food-buttons" id="foodButtons"></div>
+        
+        <div class="message" id="message"></div>
+        <div class="round-info" id="roundInfo"></div>
+        
+        <button class="reset-btn" onclick="resetGame()">リセット</button>
+    </div>
+
+    <script>
+        let muscleLevel = 0;
+        let health = 100;
+        const MAX_MUSCLE = 100;
+        const MAX_TIME = 10;
+        let timeLeft = MAX_TIME;
+        let gameOver = false;
+        let turnCount = 0;
+        let timerInterval = null;
+        
+        const character = document.getElementById('character');
+        const faceElement = document.getElementById('face');
+        const torsoElement = document.getElementById('torso');
+        const legsElement = document.getElementById('legs');
+        const muscleValue = document.getElementById('muscleValue');
+        const levelValue = document.getElementById('levelValue');
+        const healthValue = document.getElementById('healthValue');
+        const progress = document.getElementById('progress');
+        const messageDiv = document.getElementById('message');
+        const roundInfo = document.getElementById('roundInfo');
+        const foodButtons = document.getElementById('foodButtons');
+        const timerDisplay = document.getElementById('timer');
+        const timerFill = document.getElementById('timerFill');
+        const trainBtn = document.getElementById('trainBtn');
+        
+        const allFoods = {
+            broccoli: { points: 2, health: 10, emoji: '🥦', name: 'ブロッコリー', type: 'good' },
+            chicken: { points: 3, health: 15, emoji: '🍗', name: 'チキン', type: 'good' },
+            egg: { points: 5, health: 20, emoji: '🥚', name: '卵', type: 'good' },
+            fish: { points: 4, health: 12, emoji: '🐟', name: '魚', type: 'good' },
+            banana: { points: 1, health: 8, emoji: '🍌', name: 'バナナ', type: 'good' },
+            milk: { points: 2, health: 10, emoji: '🥛', name: '牛乳', type: 'good' },
+            meat: { points: 4, health: 16, emoji: '🥩', name: '肉', type: 'good' },
+            cola: { points: -3, health: -15, emoji: '🥤', name: 'コーラ', type: 'bad' },
+            candy: { points: -2, health: -10, emoji: '🍬', name: 'キャンディ', type: 'bad' },
+            burger: { points: 0, health: -5, emoji: '🍔', name: 'ハンバーガー', type: 'neutral' },
+            pizza: { points: 0, health: 5, emoji: '🍕', name: 'ピザ', type: 'neutral' },
+            donut: { points: -1, health: -8, emoji: '🍩', name: 'ドーナツ', type: 'bad' },
+            icecream: { points: -1, health: -6, emoji: '🍦', name: 'アイス', type: 'bad' },
+            chips: { points: -2, health: -8, emoji: '🥔', name: 'ポテチ', type: 'bad' },
+            apple: { points: 1, health: 7, emoji: '🍎', name: 'りんご', type: 'good' },
+            rice: { points: 1, health: 6, emoji: '🍚', name: 'ご飯', type: 'neutral' }
+        };
+        
+        const characterStages = [
+            { name: '弱々しい', face: '😢', torso: '🧍', legs: '🦵🦵', range: [0, 9] },
+            { name: '普通', face: '😊', torso: '🧍', legs: '🦵🦵', range: [10, 19] },
+            { name: 'やる気', face: '😤', torso: '🧔', legs: '🦵🦵', range: [20, 29] },
+            { name: '筋肉注射', face: '💪', torso: '💪', legs: '🦵🦵', range: [30, 49] },
+            { name: 'マッチョ', face: '😎', torso: '💪💪', legs: '🦵🦵', range: [50, 69] },
+            { name: 'スーパーマッチョ', face: '😍', torso: '💪💪💪', legs: '🦵🦵', range: [70, 84] },
+            { name: 'ウルトラマッチョ', face: '🤩', torso: '🦾🦾', legs: '🦵🦵', range: [85, 99] },
+            { name: 'マッチョの神', face: '👹', torso: '💥', legs: '🦵🦵', range: [100, 100] }
+        ];
+        
+        function getCharacterStage(level) {
+            for (let stage of characterStages) {
+                if (level >= stage.range[0] && level <= stage.range[1]) {
+                    return stage;
+                }
+            }
+            return characterStages[0];
+        }
+        
+        function getRandomFoods() {
+            const foodKeys = Object.keys(allFoods);
+            const selected = [];
+            const indices = new Set();
+            
+            while (selected.length < 4) {
+                const randomIndex = Math.floor(Math.random() * foodKeys.length);
+                if (!indices.has(randomIndex)) {
+                    indices.add(randomIndex);
+                    selected.push(foodKeys[randomIndex]);
+                }
+            }
+            
+            return selected;
+        }
+        
+        function displayFoods(foodKeys) {
+            foodButtons.innerHTML = '';
+            
+            foodKeys.forEach(key => {
+                const food = allFoods[key];
+                const btn = document.createElement('button');
+                btn.className = `food-btn btn-${food.type}`;
+                btn.innerHTML = `
+                    <div class="food-emoji">${food.emoji}</div>
+                    <div class="food-name">${food.name}</div>
+                `;
+                btn.onclick = () => feedCharacter(key);
+                foodButtons.appendChild(btn);
+            });
+        }
+        
+        function startTimer() {
+            timeLeft = MAX_TIME;
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+                const fillPercentage = (timeLeft / MAX_TIME) * 100;
+                timerFill.style.width = fillPercentage + '%';
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeout();
+                }
+            }, 1000);
+        }
+        
+        function handleTimeout() {
+            if (gameOver) return;
+            
+            messageDiv.textContent = '⏰ 時間切れ！何も食べずに進んだ...';
+            messageDiv.classList.add('timeout-message');
+            messageDiv.classList.remove('good', 'bad', 'train');
+            
+            health -= 5;
+            updateDisplay();
+            
+            if (health <= 0) {
+                gameOver = true;
+                messageDiv.textContent = '💀 ゲームオーバー！体力が0になってしまった...';
+                messageDiv.classList.remove('timeout-message');
+                messageDiv.classList.add('game-over-message');
+                foodButtons.innerHTML = '';
+                trainBtn.disabled = true;
+                return;
+            }
+            
+            turnCount++;
+            setTimeout(() => {
+                const newFoods = getRandomFoods();
+                displayFoods(newFoods);
+                startTimer();
+            }, 1500);
+        }
+        
+        function train() {
+            if (gameOver) {
+                messageDiv.textContent = 'ゲームが終了しています。';
+                return;
+            }
+            
+            if (health < 20) {
+                messageDiv.textContent = '体力が足りなくてトレーニングできない！';
+                messageDiv.classList.remove('good', 'bad', 'train');
+                return;
+            }
+            
+            clearInterval(timerInterval);
+            trainBtn.disabled = true;
+            
+            health -= 20;
+            muscleLevel += 10;
+            
+            if (muscleLevel > MAX_MUSCLE) {
+                muscleLevel = MAX_MUSCLE;
+            }
+            
+            character.classList.remove('grow', 'shrink', 'train');
+            void character.offsetWidth;
+            character.classList.add('train');
+            
+            messageDiv.textContent = '💪 猛特訓した！筋肉が急速に成長している！';
+            messageDiv.classList.add('train');
+            messageDiv.classList.remove('good', 'bad');
+            
+            updateDisplay();
+            
+            if (health <= 0) {
+                gameOver = true;
+                messageDiv.textContent = '💀 ゲームオーバー！トレーニングで疲れすぎて倒れた...';
+                messageDiv.classList.remove('train');
+                messageDiv.classList.add('game-over-message');
+                foodButtons.innerHTML = '';
+                trainBtn.disabled = true;
+                return;
+            }
+            
+            if (muscleLevel >= MAX_MUSCLE) {
+                gameOver = true;
+                setTimeout(() => {
+                    messageDiv.textContent = '🎉 マッチョの神誕生！おめでとう！';
+                    messageDiv.classList.remove('bad', 'good', 'train');
+                    messageDiv.classList.add('clear-message');
+                    foodButtons.innerHTML = '';
+                    trainBtn.disabled = true;
+                }, 300);
+                return;
+            }
+            
+            turnCount++;
+            setTimeout(() => {
+                const newFoods = getRandomFoods();
+                displayFoods(newFoods);
+                trainBtn.disabled = false;
+                startTimer();
+            }, 1500);
+        }
+        
+        function updateDisplay() {
+            muscleValue.textContent = Math.max(0, muscleLevel);
+            levelValue.textContent = Math.floor(Math.max(0, muscleLevel) / 20) + 1;
+            healthValue.textContent = Math.max(0, health);
+            
+            const percentage = Math.min((Math.max(0, muscleLevel) / MAX_MUSCLE) * 100, 100);
+            progress.style.width = percentage + '%';
+            
+            if (muscleLevel > 0) {
+                progress.textContent = Math.round(percentage) + '%';
+            } else {
+                progress.textContent = '';
+            }
+            
+            updateCharacter();
+            const stage = getCharacterStage(Math.max(0, muscleLevel));
+            roundInfo.textContent = `ターン: ${turnCount} | 状態: ${stage.name}`;
+            
+            // トレーニングボタンの状態を更新
+            if (health < 20 || gameOver) {
+                trainBtn.disabled = true;
+            } else {
+                trainBtn.disabled = false;
+            }
+        }
+        
+        function updateCharacter() {
+            const displayLevel = Math.max(0, muscleLevel);
+            const stage = getCharacterStage(displayLevel);
+            
+            faceElement.textContent = stage.face;
+            torsoElement.textContent = stage.torso;
+            legsElement.textContent = stage.legs;
+            
+            let scale = 0.5 + (displayLevel / MAX_MUSCLE) * 1.2;
+            scale = Math.min(scale, 1.7);
+            character.style.transform = `scale(${scale})`;
+            
+            if (displayLevel >= 85) {
+                character.style.filter = 'drop-shadow(0 5px 20px rgba(255, 215, 0, 0.8))';
+            } else if (displayLevel >= 70) {
+                character.style.filter = 'drop-shadow(0 5px 20px rgba(255, 165, 0, 0.6))';
+            } else if (displayLevel >= 50) {
+                character.style.filter = 'drop-shadow(0 5px 20px rgba(102, 126, 234, 0.4))';
+            } else {
+                character.style.filter = 'drop-shadow(0 5px 20px rgba(0, 0, 0, 0.2))';
+            }
+        }
+        
+        function feedCharacter(food) {
+            if (gameOver) return;
+            
+            clearInterval(timerInterval);
+            trainBtn.disabled = true;
+            
+            const data = allFoods[food];
+            turnCount++;
+            
+            muscleLevel += data.points;
+            health += data.health;
+            
+            if (muscleLevel > MAX_MUSCLE) {
+                muscleLevel = MAX_MUSCLE;
+            }
+            
+            if (data.type === 'good') {
+                character.classList.remove('shrink', 'train');
+                character.classList.remove('grow');
+                void character.offsetWidth;
+                character.classList.add('grow');
+                messageDiv.classList.remove('bad', 'train');
+                messageDiv.classList.add('good');
+            } else if (data.type === 'bad') {
+                character.classList.remove('grow', 'train');
+                character.classList.remove('shrink');
+                void character.offsetWidth;
+                character.classList.add('shrink');
+                messageDiv.classList.remove('good', 'train');
+                messageDiv.classList.add('bad');
+            } else {
+                character.classList.remove('shrink', 'grow', 'train');
+                messageDiv.classList.remove('good', 'bad', 'train');
+            }
+            
+            messageDiv.textContent = `${data.name}を食べた！`;
+            
+            updateDisplay();
+            
+            if (health <= 0) {
+                gameOver = true;
+                messageDiv.textContent = '💀 ゲームオーバー！体力が0になってしまった...';
+                messageDiv.classList.add('game-over-message');
+                foodButtons.innerHTML = '';
+                trainBtn.disabled = true;
+                return;
+            }
+            
+            if (muscleLevel >= MAX_MUSCLE) {
+                gameOver = true;
+                setTimeout(() => {
+                    messageDiv.textContent = '🎉 マッチョの神誕生！おめでとう！';
+                    messageDiv.classList.remove('bad', 'good');
+                    messageDiv.classList.add('clear-message');
+                    foodButtons.innerHTML = '';
+                    trainBtn.disabled = true;
+                }, 300);
+                return;
+            }
+            
+            setTimeout(() => {
+                const newFoods = getRandomFoods();
+                displayFoods(newFoods);
+                trainBtn.disabled = false;
+                startTimer();
+            }, 500);
+        }
+        
+        function resetGame() {
+            clearInterval(timerInterval);
+            muscleLevel = 0;
+            health = 100;
+            gameOver = false;
+            turnCount = 0;
+            timeLeft = MAX_TIME;
+            messageDiv.textContent = '';
+            messageDiv.classList.remove('clear-message', 'game-over-message', 'bad', 'good', 'timeout-message', 'train');
+            character.classList.remove('grow', 'shrink', 'train');
+            character.style.transform = 'scale(1)';
+            trainBtn.disabled = false;
+            updateDisplay();
+            const initialFoods = getRandomFoods();
+            displayFoods(initialFoods);
+            startTimer();
+        }
+        
+        resetGame();
+    </script>
+</body>
+</html>
